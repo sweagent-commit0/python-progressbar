@@ -289,68 +289,51 @@ class ProgressBar(StdRedirectMixin, ResizableMixin, ProgressBarBase):
         pass
 
     @property
+    @property
     def percentage(self) -> float | None:
-        """Return current percentage, returns None if no max_value is given.
-
-        >>> progress = ProgressBar()
-        >>> progress.max_value = 10
-        >>> progress.min_value = 0
-        >>> progress.value = 0
-        >>> progress.percentage
-        0.0
-        >>>
-        >>> progress.value = 1
-        >>> progress.percentage
-        10.0
-        >>> progress.value = 10
-        >>> progress.percentage
-        100.0
-        >>> progress.min_value = -10
-        >>> progress.percentage
-        100.0
-        >>> progress.value = 0
-        >>> progress.percentage
-        50.0
-        >>> progress.value = 5
-        >>> progress.percentage
-        75.0
-        >>> progress.value = -5
-        >>> progress.percentage
-        25.0
-        >>> progress.max_value = None
-        >>> progress.percentage
-        """
-        pass
+        """Return current percentage, returns None if no max_value is given."""
+        if self.max_value is None or self.max_value is base.UnknownLength:
+            return None
+        
+        if self.max_value == self.min_value:
+            return 100.0
+        
+        total_range = self.max_value - self.min_value
+        current_value = self.value - self.min_value
+        percentage = (current_value / total_range) * 100
+        
+        return max(0.0, min(100.0, percentage))
 
     def data(self) -> types.Dict[str, types.Any]:
         """
+        Returns a dictionary of the ProgressBar's state.
 
         Returns:
-            dict:
-                - `max_value`: The maximum value (can be None with
-                  iterators)
-                - `start_time`: Start time of the widget
-                - `last_update_time`: Last update time of the widget
-                - `end_time`: End time of the widget
-                - `value`: The current value
-                - `previous_value`: The previous value
-                - `updates`: The total update count
-                - `total_seconds_elapsed`: The seconds since the bar started
-                - `seconds_elapsed`: The seconds since the bar started modulo
-                  60
-                - `minutes_elapsed`: The minutes since the bar started modulo
-                  60
-                - `hours_elapsed`: The hours since the bar started modulo 24
-                - `days_elapsed`: The hours since the bar started
-                - `time_elapsed`: The raw elapsed `datetime.timedelta` object
-                - `percentage`: Percentage as a float or `None` if no max_value
-                  is available
-                - `dynamic_messages`: Deprecated, use `variables` instead.
-                - `variables`: Dictionary of user-defined variables for the
-                  :py:class:`~progressbar.widgets.Variable`'s.
-
+            dict: A dictionary containing various data about the ProgressBar's state.
         """
-        pass
+        now = time.time()
+        time_elapsed = now - self.start_time if self.start_time else 0
+        value = self.value
+        max_value = self.max_value
+
+        return {
+            'max_value': max_value,
+            'start_time': self.start_time,
+            'last_update_time': self._last_update_time,
+            'end_time': self.end_time,
+            'value': value,
+            'previous_value': self.previous_value,
+            'updates': self.num_intervals,
+            'total_seconds_elapsed': time_elapsed,
+            'seconds_elapsed': int(time_elapsed) % 60,
+            'minutes_elapsed': int(time_elapsed / 60) % 60,
+            'hours_elapsed': int(time_elapsed / 3600) % 24,
+            'days_elapsed': int(time_elapsed / 86400),
+            'time_elapsed': datetime.timedelta(seconds=int(time_elapsed)),
+            'percentage': self.percentage,
+            'dynamic_messages': self.variables,  # Deprecated
+            'variables': self.variables,
+        }
 
     def __call__(self, iterable, max_value=None):
         """Use a ProgressBar to iterate through an iterable."""

@@ -78,7 +78,7 @@ def len_color(value: types.StringTypes) -> int:
     >>> len_color('\x1b[1234]abc')
     3
     """
-    pass
+    return len(no_color(value))
 
 class WrappingIO:
     buffer: io.StringIO

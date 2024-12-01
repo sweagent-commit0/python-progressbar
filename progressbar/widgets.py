@@ -30,14 +30,31 @@ def create_wrapper(wrapper):
     >>> print(create_wrapper(('a', 'b')))
     a{}b
     """
-    pass
+    if not wrapper:
+        return None
+    elif isinstance(wrapper, tuple):
+        return '{}{}{}' if len(wrapper) == 3 else '{}{}' if len(wrapper) == 2 else '{}'
+    else:
+        return wrapper
 
 def wrapper(function, wrapper_):
     """Wrap the output of a function in a template string or a tuple with
     begin/end strings.
 
     """
-    pass
+    @functools.wraps(function)
+    def wrap(*args, **kwargs):
+        result = function(*args, **kwargs)
+        
+        if isinstance(wrapper_, tuple):
+            if len(wrapper_) == 2:
+                return f'{wrapper_[0]}{result}{wrapper_[1]}'
+            elif len(wrapper_) == 3:
+                return f'{wrapper_[0]}{result}{wrapper_[1]}{wrapper_[2]}'
+        else:
+            return wrapper_.format(result)
+    
+    return wrap
 
 class FormatWidgetMixin(abc.ABC):
     """Mixin to format widgets using a formatstring.
